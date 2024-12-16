@@ -1,0 +1,27 @@
+[app]
+    appEnv                = "default"
+    serviceName           = "image-analyzer"
+    hostname              = "localhost:8081"
+    shutdownTimeout       = 2
+    shutdownDelay         = 2
+
+
+[server]
+    shutdownTimeout                 = 20
+    [server.serverAddresses]
+        http                        = ":8081"
+
+[store]
+    Choice = "sql"
+    [store.sql]
+        dialect               = "postgres"
+        protocol              = "tcp"
+        port                  = 5432
+        url                   = "localhost"
+        username              = "postgres"
+        password              = "rOOt"
+        name                  = "postgres"
+        sslMode               = "disable"
+        debug                 = true
+        MaxOpenConnections    = 5
+        MaxIdleConnections    = 5
