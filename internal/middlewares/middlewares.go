@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/danushk97/image-analyzer/internal/constants"
@@ -13,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func ErrorResponse(c *gin.Context, ctx context.Context, err error) {
+func ErrorResponse(ctx *gin.Context, err error) {
 	log := pkgLogger.Ctx(ctx)
 	log.WithError(err).Error(err.Error())
 
@@ -24,75 +23,83 @@ func ErrorResponse(c *gin.Context, ctx context.Context, err error) {
 
 	iErr, ok := err.(errors.IError)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, problemDetail)
+		ctx.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
 
 	if iErr.IsOfType(errors.BAD_REQUEST_ERROR) {
-		c.JSON(http.StatusBadRequest, gin.H{
+		ctx.JSON(http.StatusBadRequest, gin.H{
 			"code":        internaErr.BadRequesterror,
 			"description": iErr.Error(),
 		})
 
 		return
 	} else if iErr.IsOfType(errors.AUTHORIZATION_ERROR) {
-		c.JSON(http.StatusUnauthorized, gin.H{
+		ctx.JSON(http.StatusUnauthorized, gin.H{
 			"code":        internaErr.Unauthorized,
 			"description": iErr.Error(),
 		})
 
 		return
 	} else {
-		c.JSON(http.StatusInternalServerError, problemDetail)
+		ctx.JSON(http.StatusInternalServerError, problemDetail)
 	}
 }
 
-func TokenAuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ctx := AppCtx(c)
-		logger := pkgLogger.Ctx(ctx)
+func AuthMiddleware() gin.HandlerFunc {
+	return func(gc *gin.Context) {
+		logger := pkgLogger.Ctx(gc.Request.Context())
 
 		logger.Info("AUTH_VALIDATION")
 
 		// Extract user_id from header
-		userID := c.GetHeader(constants.HeaderUserId)
+		userID := gc.GetHeader(constants.HeaderUserId)
 		if userID == "" {
 			logger.Warn("USER_ID_NOT_FOUND")
 			ErrorResponse(
-				c,
-				ctx,
+				gc,
 				errors.NewAuthorizationError(internaErr.Unauthorized),
 			)
-			c.Abort()
+			gc.Abort()
 		}
 
-		// Set user_id in context
-		c.Set("user_id", userID)
+		ctx := contextkey.SetInContext(
+			gc.Request.Context(),
+			contextkey.UserID,
+			userID,
+		)
+		gc.Request = gc.Request.WithContext(ctx)
 
 		logger.Info("AUTH_VALIDATION_SUCCESS")
 
-		c.Next()
+		gc.Next()
 	}
 }
 
-func AppCtx(gc *gin.Context) context.Context {
+func CtxMiddleware() gin.HandlerFunc {
+	return func(gc *gin.Context) {
+		// Convert the Gin context to a Go context (using gin.Context's context method)
+		ctx := gc.Request.Context()
 
-	val, ok := gc.Get(contextkey.AppCtx.String())
-	if ok {
-		appCtx := val.(context.Context)
-		return appCtx
+		// Retrieve the request ID from gin context keys, if available
+		var requestIDStr string
+		if requestID, ok := gc.Keys[constants.HeaderRequestId].(string); ok && requestID != "" {
+			requestIDStr = requestID
+		} else {
+			// Generate a new UUID if no request ID is found
+			requestIDStr = uuid.NewString()
+		}
+
+		// Set the request ID in the context (using the proper key)
+		ctx = contextkey.SetInContext(ctx, contextkey.RequestID, requestIDStr)
+
+		// Set the request path in the context
+		ctx = contextkey.SetInContext(ctx, contextkey.RequestPath, gc.FullPath())
+
+		// Now, reattach the updated context to the Gin context
+		gc.Request = gc.Request.WithContext(ctx)
+
+		// Continue processing the request
+		gc.Next()
 	}
-
-	requestId, ok := gc.Keys[constants.HeaderRequestId]
-	if !ok {
-		requestId = uuid.NewString()
-	}
-
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, contextkey.RequestID, requestId)
-	ctx = context.WithValue(ctx, contextkey.RequestPath, gc.FullPath())
-
-	gc.Set(contextkey.AppCtx.String(), ctx)
-
-	return ctx
 }

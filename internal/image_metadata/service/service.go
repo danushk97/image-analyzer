@@ -29,7 +29,7 @@ func (s *Service) CreateImageMetadata(
 ) (*model.ImageMetadata, errors.IError) {
 	imageMetadata := &model.ImageMetadata{
 		Filename: req.FileName,
-		UserID:   contextkey.GetUserIDFromCtx(ctx),
+		UserID:   contextkey.GetFromFromCtx(ctx, contextkey.UserID),
 		Status:   constants.StatusInitiated,
 	}
 	err := s.Repo.CreateImageMetadata(ctx, imageMetadata)

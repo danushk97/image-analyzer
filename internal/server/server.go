@@ -7,6 +7,7 @@ import (
 
 	healthServer "github.com/danushk97/image-analyzer/internal/health"
 	"github.com/danushk97/image-analyzer/internal/image_metadata"
+	"github.com/danushk97/image-analyzer/internal/middlewares"
 	pkgLogger "github.com/danushk97/image-analyzer/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
@@ -45,6 +46,7 @@ func New(ctx context.Context, config *Config) *Server {
 	}
 
 	router := gin.Default()
+	router.Use(middlewares.CtxMiddleware())
 
 	logger.Info(
 		fmt.Sprintf(

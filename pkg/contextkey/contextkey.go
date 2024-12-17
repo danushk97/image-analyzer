@@ -20,13 +20,13 @@ var (
 )
 
 // GetUserIDFromRequest ...
-func GetUserIDFromCtx(ctx context.Context) string {
-	userVal := ctx.Value(UserID)
-	if userVal == nil {
+func GetFromFromCtx(ctx context.Context, key key) string {
+	val := ctx.Value(key)
+	if val == nil {
 		return ""
 	}
 
-	strVal, ok := userVal.(string)
+	strVal, ok := val.(string)
 	if !ok {
 		return ""
 	}
@@ -35,10 +35,14 @@ func GetUserIDFromCtx(ctx context.Context) string {
 }
 
 // SetUserIDFromRequest ... sets input userID in context userID header
-func SetUserIDFromRequest(ctx context.Context, userID string) context.Context {
-	userVal := ctx.Value(UserID)
-	if userVal == nil {
-		ctx = context.WithValue(ctx, UserID, userID)
+func SetInContext(
+	ctx context.Context,
+	key key,
+	value string,
+) context.Context {
+	val := ctx.Value(key)
+	if val == nil {
+		ctx = context.WithValue(ctx, key, value)
 	}
 	return ctx
 }
