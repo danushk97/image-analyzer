@@ -1,5 +1,4 @@
-// Package db has specific primitives for database config & connections.
-package db
+package sql
 
 import (
 	"context"

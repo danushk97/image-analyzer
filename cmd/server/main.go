@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -11,33 +10,16 @@ import (
 
 	"github.com/danushk97/image-analyzer/internal/config"
 	health "github.com/danushk97/image-analyzer/internal/health"
+	"github.com/danushk97/image-analyzer/internal/image_metadata"
+	imageMetaCore "github.com/danushk97/image-analyzer/internal/image_metadata/service"
 	srv "github.com/danushk97/image-analyzer/internal/server"
+	"github.com/danushk97/image-analyzer/pkg/env"
 	pkgLogger "github.com/danushk97/image-analyzer/pkg/logger"
 	"github.com/danushk97/image-analyzer/pkg/storage"
 )
 
-// EnvDev signifies it is a dev and is
-// used to decide seed or not seed data
-const EnvDev = "dev"
-
-// ModeTest signifies it is a testing mode
-const ModeTest = "test"
-
-// ModeLive signifies it is a testing mode
-const ModeLive = "live"
-
-// New fetches env for bootstrapping
-func getEnv() string {
-	environment := os.Getenv("APP_ENV")
-	if environment == "" {
-		environment = EnvDev
-	}
-
-	return environment
-}
-
 func main() {
-	env := getEnv()
+	env := env.GetEnv()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -47,16 +29,26 @@ func main() {
 	config := config.NewConfig(env)
 
 	// storage service is the service for main persistent store
-	_, err := storage.New(ctx, config.Store)
+	storageService, err := storage.New(ctx, config.Store)
 	if err != nil {
-		log.Fatal("could not create database, err:%+v", err)
+		logger.Fatalf(
+			"could not create database, err:%+v", err,
+		)
 	}
-	healthServer := health.NewHealthServer()
+
+	imageMetaService := imageMetaCore.NewService(
+		imageMetaCore.WithStorage(storageService),
+	)
+
+	healthServer := health.NewServer()
+
+	imageServer := image_metadata.NewServer(imageMetaService)
 
 	server := srv.New(ctx, &srv.Config{})
 
 	server.WithOptions(
 		server.WithHealthServer(healthServer),
+		server.WithImageMetadataServer(imageServer),
 	)
 
 	// graceful shutdown, no libs required, understand just below

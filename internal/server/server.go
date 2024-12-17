@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	healthServer "github.com/danushk97/image-analyzer/internal/health"
+	"github.com/danushk97/image-analyzer/internal/image_metadata"
 	pkgLogger "github.com/danushk97/image-analyzer/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
@@ -97,6 +98,13 @@ func (s *Server) WithOptions(opts ...ServerOption) error {
 func (s *Server) WithHealthServer(hs *healthServer.HealthServer) ServerOption {
 	return func(s *Server) error {
 		hs.SetupRoutes(s.router)
+		return nil
+	}
+}
+
+func (s *Server) WithImageMetadataServer(is *image_metadata.ImageMetadataServer) ServerOption {
+	return func(s *Server) error {
+		is.SetupRoutes(s.router)
 		return nil
 	}
 }

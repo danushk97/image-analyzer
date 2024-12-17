@@ -1,4 +1,4 @@
-package controllers
+package health
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 type HealthServer struct {
 }
 
-func NewHealthServer() *HealthServer {
+func NewServer() *HealthServer {
 	return &HealthServer{}
 }
 
