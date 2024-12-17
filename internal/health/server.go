@@ -22,7 +22,7 @@ func (hs *HealthServer) SetupRoutes(r *gin.Engine) {
 }
 
 func (hs *HealthServer) Check(gc *gin.Context) {
-	_, logger := pkgLogger.Ctx(context.Background())
+	logger := pkgLogger.Ctx(context.Background())
 
 	logger.Info("Health check.")
 

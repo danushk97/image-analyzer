@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/danushk97/image-analyzer/pkg/contextkey"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -88,14 +89,30 @@ func NewLogger() *Logger {
 }
 
 // WithContext returns a copy of ctx with the Logger attached.
-func Ctx(ctx context.Context) (context.Context, *Entry) {
+func Ctx(ctx context.Context) *Entry {
 	if l, ok := ctx.Value(ctxKey{}).(*Entry); ok {
-		return ctx, l
+		return l
 	}
 
 	logger := NewLogger()
 	entry := logger.newEntry()
 	ctx = context.WithValue(ctx, ctxKey{}, entry)
 
-	return ctx, entry
+	fields := map[string]interface{}{}
+
+	if ctx != nil {
+		if val, ok := ctx.Value(contextkey.RequestID).(string); ok {
+			fields[contextkey.RequestID.String()] = val
+		}
+
+		if val, ok := ctx.Value(contextkey.RequestPath).(string); ok {
+			fields[contextkey.RequestPath.String()] = val
+		}
+	}
+
+	if len(fields) > 0 {
+		entry = entry.WithFields(fields)
+	}
+
+	return entry
 }

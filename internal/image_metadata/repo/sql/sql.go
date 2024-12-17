@@ -53,7 +53,7 @@ func (r Repo) CreateImageMetadata(
 	ctx context.Context,
 	image *model.ImageMetadata,
 ) errors.IError {
-	ctx, logger := pkgLogger.Ctx(ctx)
+	logger := pkgLogger.Ctx(ctx)
 	err := r.dataStore.Create(ctx, image)
 
 	if err != nil {

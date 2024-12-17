@@ -35,7 +35,7 @@ type Server struct {
 
 // New creates a new server
 func New(ctx context.Context, config *Config) *Server {
-	ctx, logger := pkgLogger.Ctx(ctx)
+	logger := pkgLogger.Ctx(ctx)
 
 	if config.ServerAddress == "" {
 		config.ServerAddress = DefaultHTTPAddress

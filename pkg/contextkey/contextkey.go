@@ -13,11 +13,14 @@ func (c key) String() string {
 
 var (
 	// UserID is the authenticated user making the request
-	UserID = key("userID")
+	UserID      = key("userID")
+	RequestID   = key("requestID")
+	RequestPath = key("requestPath")
+	AppCtx      = key("appCtx")
 )
 
 // GetUserIDFromRequest ...
-func GetUserIDFromRequest(ctx context.Context) string {
+func GetUserIDFromCtx(ctx context.Context) string {
 	userVal := ctx.Value(UserID)
 	if userVal == nil {
 		return ""

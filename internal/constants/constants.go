@@ -1,5 +1,10 @@
 package constants
 
 const (
-	STATUS_INITIATED = "STATUS_INITIATED"
+	StatusInitiated = "STATUS_INITIATED"
+
+	HeaderUserId    = "x-user-id"
+	HeaderRequestId = "x-request-id"
+
+	RequestPath = "request_path"
 )

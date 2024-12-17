@@ -7,8 +7,8 @@ import (
 	"github.com/danushk97/image-analyzer/internal/image_metadata/dtos"
 	"github.com/danushk97/image-analyzer/internal/image_metadata/model/v1"
 	"github.com/danushk97/image-analyzer/internal/image_metadata/repo/sql"
-	"github.com/google/uuid"
 
+	"github.com/danushk97/image-analyzer/pkg/contextkey"
 	"github.com/danushk97/image-analyzer/pkg/errors"
 )
 
@@ -29,8 +29,8 @@ func (s *Service) CreateImageMetadata(
 ) (*model.ImageMetadata, errors.IError) {
 	imageMetadata := &model.ImageMetadata{
 		Filename: req.FileName,
-		UserID:   uuid.NewString(),
-		Status:   constants.STATUS_INITIATED,
+		UserID:   contextkey.GetUserIDFromCtx(ctx),
+		Status:   constants.StatusInitiated,
 	}
 	err := s.Repo.CreateImageMetadata(ctx, imageMetadata)
 
